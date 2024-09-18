@@ -36,7 +36,7 @@ const userResolver = {
           throw new Error("User already exists");
         }
 
-        const salt = await bcrypt.gensalt(10);
+        const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const boyProfilePic = `http://avatar.iran.liara.run/public/boy?username=${username}`;
@@ -62,6 +62,8 @@ const userResolver = {
     login: async (_, { input }, context) => {
       try {
         const { username, password } = input;
+        if (!username || !password)
+          return toast.error("Plase fill all the fields");
         const { user } = await context.authenticate("graphql-local", {
           username,
           password,
@@ -76,13 +78,13 @@ const userResolver = {
       }
     },
 
-    logout: async (_, __, {}) => {
+    logout: async (_, __, context) => {
       try {
         await context.logout();
-        req.session.destroy((err) => {
+        context.req.session.destroy((err) => {
           if (err) throw err;
         });
-        res.clearCookie("connect.sid");
+        context.res.clearCookie("connect.sid");
         return { message: "Logged out successfully" };
       } catch (err) {
         console.log(`Error in logout: ${err}`);
