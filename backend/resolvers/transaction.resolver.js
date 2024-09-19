@@ -4,9 +4,9 @@ const transactionResolver = {
   Query: {
     transactions: async (_, __, context) => {
       try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        const userId = await context.getUser()._id;
-
+        const currentUser = await context.getUser();
+        if (!currentUser) throw new Error("Unauthorized");
+        const userId = currentUser._id;
         const transactions = await Transaction.find({ userId });
         return transactions;
       } catch (err) {
@@ -30,14 +30,17 @@ const transactionResolver = {
   Mutation: {
     createTransaction: async (_, { input }, context) => {
       try {
+        const currentUser = await context.getUser();
+        console.log("currentUser: ", currentUser);
+        console.log("currentUser._id: ", currentUser._id);
         const newTransaction = new Transaction({
           ...input,
-          userId: context.getUser()._id,
+          userId: currentUser._id,
         });
         await newTransaction.save();
         return newTransaction;
       } catch (err) {
-        console.log(`Error creating transaction: ${err}`);
+        console.log("Error creating transaction: ", err);
         throw new Error("Error creating transaction");
       }
     },
@@ -50,7 +53,7 @@ const transactionResolver = {
         );
         return updatedTransaction;
       } catch (err) {
-        console.log(`Error updating transaction: ${err}`);
+        console.log("Error updating transaction: ", err);
         throw new Error("Error updating transaction");
       }
     },
@@ -61,7 +64,7 @@ const transactionResolver = {
         );
         return deletedTransaction;
       } catch (err) {
-        console.log(`Error deleting transaction: ${err}`);
+        console.log("Error deleting transaction: ", err);
         throw new Error("Error deleting transaction");
       }
     },
