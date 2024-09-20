@@ -1,4 +1,5 @@
 import Transaction from "../models/transaction.model.js";
+import User from "../models/user.model.js";
 
 const transactionResolver = {
   Query: {
@@ -25,8 +26,27 @@ const transactionResolver = {
       }
     },
 
-    // TODO => ADD categoryStatistics query
+    categoryStatistics: async (_, __, context) => {
+      const currentUser = await context.getUser();
+      if (!currentUser) throw new Error("Unauthorized");
+      const userId = currentUser._id;
+      const transactions = await Transaction.find({ userId });
+      const categoryMap = {};
+
+      transactions.forEach((transaction) => {
+        if (!categoryMap[transaction.category]) {
+          categoryMap[transaction.category] = 0;
+        }
+        categoryMap[transaction.category] += transaction.amount;
+      });
+
+      return Object.entries(categoryMap).map(([category, totalAmount]) => ({
+        category,
+        totalAmount,
+      }));
+    },
   },
+
   Mutation: {
     createTransaction: async (_, { input }, context) => {
       try {
@@ -44,6 +64,7 @@ const transactionResolver = {
         throw new Error("Error creating transaction");
       }
     },
+
     updateTransaction: async (_, { input }) => {
       try {
         const updatedTransaction = await Transaction.findByIdAndUpdate(
@@ -57,6 +78,7 @@ const transactionResolver = {
         throw new Error("Error updating transaction");
       }
     },
+
     deleteTransaction: async (_, { transactionId }) => {
       try {
         const deletedTransaction = await Transaction.findByIdAndDelete(
@@ -69,7 +91,18 @@ const transactionResolver = {
       }
     },
   },
-  //TODO => ADD TRANSACTION/USER RELATIONSHIP
+  Transaction: {
+    user: async (parent) => {
+      const userId = parent.userId;
+      try {
+        const user = await User.findById(userId);
+        return user;
+      } catch (error) {
+        console.error("Error getting user: ", error);
+        throw new Error("Error getting user");
+      }
+    },
+  },
 };
 
 export default transactionResolver;
