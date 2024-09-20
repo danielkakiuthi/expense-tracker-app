@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 import passport from "passport";
 import session from "express-session";
@@ -23,6 +24,7 @@ import { configurePassport } from "./passport/passport.config.js";
 dotenv.config();
 configurePassport();
 
+const __dirname = path.resolve();
 const app = express();
 
 const httpServer = http.createServer(app);
@@ -71,6 +73,12 @@ app.use(
     context: async ({ req, res }) => buildContext({ req, res }),
   })
 );
+
+// npm run build will build your frontend app, and it will be the optimized version of your app
+app.use(express.static(path.join(__dirname, "frontend/dist")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend/dist", "index.html"));
+});
 
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 await connectDB();

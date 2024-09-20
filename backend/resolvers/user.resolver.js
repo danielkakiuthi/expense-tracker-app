@@ -22,7 +22,6 @@ const userResolver = {
         throw new Error("Error getting user");
       }
     },
-    // TODO => ADD USER/TRANSACTION RELATION
   },
   Mutation: {
     signUp: async (_, { input }, context) => {
